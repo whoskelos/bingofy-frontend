@@ -1,0 +1,77 @@
+/*
+  Identidad: funda de disco. Cobalto, blanco azulado, amarillo de bola de bingo y coral.
+  Los tokens usan light-dark(): el tema sigue al sistema y la sala del host fuerza
+  la noche con .theme-night para no deslumbrar en una tele de salón.
+*/
+:root {
+  color-scheme: light dark;
+
+  --font: "Archivo Variable", "Archivo", "Helvetica Neue", Arial, sans-serif;
+
+  --bg: light-dark(#eef1fb, #0f1a63);
+  --bg-raised: light-dark(#ffffff, #1a2791);
+  --ink: light-dark(#0f1a63, #f4f6ff);
+  --ink-soft: light-dark(#485293, #bcc6f6);
+  --line: light-dark(#c2cae9, #3547b9);
+
+  /* Acción principal: cobalto de día, amarillo de noche */
+  --accent: light-dark(#2338d6, #ffd21f);
+  --accent-edge: light-dark(#121f8c, #b38b00);
+  --accent-ink: light-dark(#ffffff, #0f1a63);
+
+  /* Mancha de rotulador de bingo: igual en los dos temas */
+  --mark: #ffd21f;
+  --mark-edge: #b38b00;
+  --mark-ink: #0f1a63;
+
+  --hot: light-dark(#d3301f, #ff5a47);
+  --hot-edge: light-dark(#8f1a0e, #b32b1b);
+  --hot-ink: light-dark(#ffffff, #0f1a63);
+
+  --ok: light-dark(#0b7a55, #79e0b2);
+  --warn: light-dark(#a86400, #ffd21f);
+
+  --disc: #080c36;
+  --radius: 4px;
+
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.theme-night { color-scheme: dark; }
+
+* { box-sizing: border-box; }
+
+html, body, #app { min-height: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font);
+  font-weight: 450;
+  line-height: 1.4;
+  font-synthesis: none;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+button, input { font: inherit; color: inherit; }
+
+button { cursor: pointer; }
+
+img { max-width: 100%; }
+
+h1, h2, p { margin: 0; }
+
+:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
