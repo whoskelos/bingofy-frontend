@@ -1,10 +1,4 @@
-const REQUIRED = ["VITE_API_BASE_URL", "VITE_SOCKET_URL", "VITE_PUBLIC_APP_URL"];
-
-function readUrl(name) {
-  const value = import.meta.env[name];
-  if (!value || value === "RELLENAR_A_MANO") {
-    throw new Error(`${name}: falta. Copia .env.example a .env y rellena la URL.`);
-  }
+function normalizeUrl(value, name) {
   let url;
   try {
     url = new URL(value);
@@ -17,14 +11,25 @@ function readUrl(name) {
   return url.toString().replace(/\/$/, "");
 }
 
-export function getEnv() {
-  const missing = REQUIRED.filter((name) => !import.meta.env[name] || import.meta.env[name] === "RELLENAR_A_MANO");
-  if (missing.length > 0) {
-    throw new Error(missing.map((name) => `${name}: falta. Copia .env.example a .env y rellena la URL.`).join("\n"));
+function readUrl(env, name) {
+  const value = env[name];
+  if (!value || value === "RELLENAR_A_MANO") {
+    throw new Error(`${name}: falta. Defínela en .env o en .env.production.local.`);
   }
-  return {
-    apiBaseUrl: readUrl("VITE_API_BASE_URL"),
-    socketUrl: readUrl("VITE_SOCKET_URL"),
-    publicAppUrl: readUrl("VITE_PUBLIC_APP_URL")
-  };
+  return normalizeUrl(value, name);
+}
+
+export function urlsFromEnv(env, { origin = "" } = {}) {
+  const apiBaseUrl = readUrl(env, "VITE_API_BASE_URL");
+  const socketUrl = readUrl(env, "VITE_SOCKET_URL");
+  const publicValue = env.VITE_PUBLIC_APP_URL;
+  const publicAppUrl = publicValue && publicValue !== "RELLENAR_A_MANO"
+    ? normalizeUrl(publicValue, "VITE_PUBLIC_APP_URL")
+    : normalizeUrl(origin, "origen de la página");
+  return { apiBaseUrl, socketUrl, publicAppUrl };
+}
+
+export function getEnv() {
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  return urlsFromEnv(import.meta.env, { origin });
 }

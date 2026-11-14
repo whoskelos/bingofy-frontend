@@ -82,13 +82,13 @@ npm run dev
 
 `npm run dev` escucha en la red (`--host`) para que un móvil en la misma wifi pueda abrir el QR.
 
-Variables:
+La URL del backend no está en el código. `npm run dev` la lee de `.env`. `vite build` la lee de `.env.production.local`. Esos dos archivos no se suben a git. Si `VITE_PUBLIC_APP_URL` falta, el QR usa el origen de la página.
 
 | Variable | Qué poner |
 | --- | --- |
-| `VITE_API_BASE_URL` | URL del backend, por ejemplo `http://192.168.1.20:3000` |
+| `VITE_API_BASE_URL` | URL del backend |
 | `VITE_SOCKET_URL` | La misma URL del backend |
-| `VITE_PUBLIC_APP_URL` | URL pública de este frontend, la que va dentro del QR |
+| `VITE_PUBLIC_APP_URL` | URL de este frontend, la que va dentro del QR |
 
 `VITE_PUBLIC_APP_URL` tiene que coincidir con `FRONTEND_URL` del backend. En el móvil no uses `localhost`: el QR llevaría al propio teléfono. El código de sala que acepta el inicio tiene 6 caracteres del alfabeto del backend (`ROOM_CODE_LENGTH=6`, sin I, O, 0 ni 1).
 
