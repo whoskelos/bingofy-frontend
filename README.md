@@ -13,23 +13,24 @@ Hacen falta dos cosas: un ordenador conectado a la tele, que hace de host y repr
 Necesitas una cuenta de Spotify Premium. La música suena en el navegador del ordenador, no en el móvil.
 
 1. **Entra en Bingofy** desde el ordenador y pulsa **Soy el host**, o ve a `/host`. Pulsa **Conectar con Spotify** y autoriza la cuenta.
-2. **Elige las playlists** de las que saldrán las canciones. Solo aparecen las que tienen al menos 100 canciones válidas, y se pueden elegir varias. Si entre todas suman entre 100 y 150 canciones, la app avisa de que habrá poca variedad.
+2. **Elige las playlists** de las que saldrán las canciones y el **ritmo** (rápido, normal o tranquilo): cuánto suena cada canción. El ritmo se fija al crear la sala y no se cambia durante la partida.
+   Las playlists: Solo aparecen las que tienen al menos 100 canciones válidas, y se pueden elegir varias. Si entre todas suman entre 100 y 150 canciones, la app avisa de que habrá poca variedad.
 3. **Pulsa Crear sala.** La tele muestra el QR, la dirección con el código y el código en fichas grandes. Los jugadores van apareciendo en la lista. Pueden entrar hasta 50.
 4. **Pulsa Activar reproductor** y espera a que el estado del reproductor diga "listo". Hay que hacerlo en cada carga de la página, porque el navegador no deja sonar el audio sin un clic. **Empezar partida** no se habilita hasta entonces.
 5. **Pulsa Empezar partida.** Desde ese momento nadie más puede entrar en la sala.
 
-Durante la partida, la tele muestra el disco con la canción actual, la cuenta atrás y las canciones que ya sonaron, la última arriba. Los controles son:
+Durante la partida, la tele muestra el disco con la canción actual, la cuenta atrás la fase que se juega (línea o cartón completo) y la lista completa de canciones sonadas, la última arriba, para poder validar un canto. Encima de la lista hay un buscador por título o artista (sin distinguir mayúsculas ni tildes) que filtra mientras escribes; si ninguna coincide, avisa de que esa canción no ha sonado. `Esc` borra la búsqueda. Los controles son:
 
 | Botón | Qué hace |
 | --- | --- |
 | Siguiente | Salta a la siguiente canción sin esperar a que termine el corte |
 | Pausa | Para la música y la cuenta atrás. Se continúa con **Reanudar** |
-| Seguir | Aparece tras un bingo y pone la siguiente canción |
+| Seguir con el bingo | Aparece tras una línea y pone la siguiente canción |
 | Terminar | Cierra la partida |
 
-Cada canción suena un corte de 20 segundos y pasa sola a la siguiente. El reloj empieza cuando Spotify confirma que la canción suena. La duración se cambia con `SONG_CLIP_SECONDS` en el backend.
+Cada canción suena un corte y pasa sola a la siguiente. La duración depende del ritmo de la sala (`CLIP_FAST_SECONDS`, `SONG_CLIP_SECONDS` y `CLIP_RELAXED_SECONDS` en el backend). El reloj empieza cuando Spotify confirma que la canción suena.
 
-Cuando un jugador canta un bingo válido, la partida se pausa y la tele enseña su nombre y si fue línea o cartón completo. Para continuar pulsa **Seguir**. La partida termina también cuando se acaban las canciones.
+Cuando un jugador canta una línea válida, la partida se pausa y la tele enseña su nombre. Para continuar pulsa **Seguir con el bingo**. Cuando alguien canta el cartón completo, la partida termina. También termina si se acaban las canciones, y entonces la tele lo explica.
 
 Si recargas la página del host, la sala sigue existiendo. Vuelve a pulsar **Activar reproductor**. Si la sesión de Spotify caduca, aparece un aviso con el botón **Reconectar Spotify** y no se pierde la sala.
 
@@ -39,19 +40,20 @@ Si recargas la página del host, la sala sigue existiendo. Vuelve a pulsar **Act
 2. **Elige tu nombre** y pulsa **Entrar**. Recibes tu cartón. Si la partida ya empezó, la app lo explica y no deja entrar.
 3. **Espera** a que el host empiece. Arriba ves la canción que suena, con su carátula, y los segundos que quedan.
 4. **Marca las casillas.** Cada casilla es una canción con su carátula, título y artista. Cuando suene una de tu cartón, tócala y se marca con una mancha amarilla. Vuelve a tocarla para desmarcarla.
-5. **Canta cuando completes algo.** Pulsa **¡Bingo!** si tienes una línea, o **Cartón completo** si tienes todas las casillas. Los botones se habilitan cuando la partida está en marcha o en pausa.
+5. **Canta cuando completes algo.** Pulsa **Línea** si completas una fila, o **¡Bingo!** si tienes todas las casillas. **Línea** solo está activo mientras nadie la haya cantado. Los botones se habilitan cuando la partida está en marcha o en pausa.
+6. **Sigue las últimas canciones.** Debajo del cartón ves las tres últimas que han sonado, por si te despistas.
 
 Si cierras la pestaña o se corta la conexión, vuelve a abrir el enlace de la sala y recuperas tu cartón, con las marcas hechas.
 
 ### Reglas del bingo
 
-- **Cartón:** cuadrícula de 5×5 con 25 canciones distintas, distinta para cada jugador. El tamaño sale de `BOARD_SIZE` en el backend. Si `FREE_CENTER` está activo, la casilla central es "Libre" y cuenta como marcada.
-- **Línea:** cinco casillas seguidas en una fila, una columna o una de las dos diagonales.
-- **Cartón completo:** todas las casillas marcadas.
-- **Marcar es libre, pero se comprueba al cantar.** Si tienes marcada una canción que todavía no ha sonado, el bingo se rechaza entero con el aviso "Hay casillas marcadas de canciones que todavía no han sonado". Desmárcala y vuelve a intentarlo.
-- **Un mismo jugador no cobra dos veces el mismo premio.** Puede ganar una línea y después el cartón completo.
-- **Un bingo rechazado** solo lo ve quien lo cantó. Uno válido lo ven todos.
-- **Límite de intentos:** cada jugador puede cantar hasta 10 veces por minuto.
+- **Dos premios, en orden.** Primero la **línea** y después el **bingo** (cartón completo). La línea se premia una sola vez: la gana quien la cante primero, la partida se pausa, la tele enseña su nombre y su cartón resalta la fila. El host pulsa **Seguir con el bingo** y, desde ahí, solo se puede cantar el cartón completo.
+- **Cartón:** cuadrícula de 3 filas × 5 columnas con 15 canciones distintas, distinta para cada jugador. Las filas y columnas salen del cartón que envía el backend (`CARD_ROWS` y `CARD_COLS`). Si `FREE_CENTER` está activo, la casilla central es "Libre" y cuenta como marcada.
+- **Línea:** por defecto, una fila completa. El backend puede aceptar también columnas y diagonales (`LINE_MODE=any`).
+- **Bingo:** todas las casillas marcadas. Termina la partida. Si nadie había cantado línea, quien canta el bingo se lleva también la línea.
+- **Marcar es libre, pero se comprueba al cantar.** Solo se miran las casillas de lo que cantas: una marca equivocada fuera de tu línea no la impide. Si dentro de lo que cantas hay una canción marcada que todavía no ha sonado, se rechaza con el aviso "Hay casillas marcadas de canciones que todavía no han sonado".
+- **Si te equivocas** hay que esperar unos segundos (3 por defecto) antes de volver a cantar.
+- **Un canto rechazado** solo lo ve quien lo cantó. Uno válido lo ven todos.
 
 ## Dependencias
 
@@ -100,7 +102,7 @@ Identidad de funda de disco: cobalto, blanco azulado, amarillo de bola de bingo 
 
 - **Tipografía:** Archivo variable con eje de anchura (`@fontsource-variable/archivo/wdth.css`), empaquetada con Vite. Condensada y pesada para titulares, ancho normal para el texto. Fontsource se contrastó con Context7 el 14 de noviembre de 2026.
 - **Host (`/host/sala/:code`):** pensado para un portátil conectado a la tele. Con ancho de al menos 900 px y alto de al menos 520 px ocupa la pantalla sin scroll y todo escala con el ancho de la ventana (`font-size: clamp(16px, 1.35vw, 80px)` y unidades `em`). Por debajo de esos tamaños, por ejemplo desde un teléfono, se apila, hace scroll y los controles quedan fijos abajo.
-- **Jugador:** móvil primero. La canción actual queda fija arriba y los botones de bingo fijos abajo. El texto de las casillas se ajusta con container queries al tamaño del cartón (`BOARD_SIZE`).
+- **Jugador:** móvil primero. La canción actual queda fija arriba y los botones de línea y bingo fijos abajo. La cuadrícula usa las filas y columnas del cartón, y el texto de las casillas se ajusta con container queries a su tamaño.
 - **Cuenta atrás:** el backend envía `clipEndsAt` pero no la duración del corte, así que `useClipCountdown` la deduce del primer instante en que ve cada corte. Tras reconectar a mitad de un corte, el arco se corrige con el siguiente.
 - Marcar casillas no depende solo del color: la mancha amarilla lleva una marca de verificación.
 

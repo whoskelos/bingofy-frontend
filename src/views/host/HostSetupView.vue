@@ -15,6 +15,13 @@ const session = useSessionStore();
 const playlists = usePlaylistsStore();
 const creating = ref(false);
 const createError = ref("");
+// Ritmo de la sala: cuánto suena cada canción. Los segundos reales los fija el servidor.
+const pace = ref("normal");
+const paces = [
+  { id: "fast", label: "Rápido", hint: "Canciones cortas" },
+  { id: "normal", label: "Normal", hint: "Lo habitual" },
+  { id: "relaxed", label: "Tranquilo", hint: "Más tiempo para buscar" }
+];
 
 const notice = computed(() => session.authError ? errorMessage(session.authError) : "");
 
@@ -45,7 +52,7 @@ async function create() {
   creating.value = true;
   createError.value = "";
   try {
-    const room = await createRoom(playlists.selectedIds);
+    const room = await createRoom(playlists.selectedIds, pace.value);
     await router.push({ name: "host-room", params: { code: room.code } });
   } catch (error) {
     createError.value = errorCodeFrom(error);
@@ -74,6 +81,16 @@ async function create() {
       </header>
       <div v-if="ready" class="setup__create">
         <p class="setup__summary" aria-live="polite">{{ summary }}</p>
+        <fieldset class="pace">
+          <legend class="pace__legend">Ritmo de las canciones</legend>
+          <label v-for="option in paces" :key="option.id" class="pace__option">
+            <input v-model="pace" type="radio" name="pace" :value="option.id" />
+            <span class="pace__card">
+              <strong>{{ option.label }}</strong>
+              <span>{{ option.hint }}</span>
+            </span>
+          </label>
+        </fieldset>
         <AlertMessage v-if="playlists.lowVariety">
           Hay poca variedad: las playlists elegidas suman entre 100 y 150 canciones. Añade otra para que se repitan menos.
         </AlertMessage>
@@ -137,6 +154,27 @@ async function create() {
 .setup__create .btn { width: 100%; }
 .setup__summary { font-size: 1.2rem; font-weight: 700; font-stretch: 84%; }
 .setup__empty { font-size: 1.1rem; max-width: 30rem; }
+
+/* Selector de ritmo: tres fundas, la elegida se rellena de amarillo como las playlists */
+.pace { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5rem; margin: 0; padding: 0; border: 0; min-width: 0; }
+.pace__legend { grid-column: 1 / -1; padding: 0; margin-bottom: 0.3rem; font-weight: 700; font-stretch: 84%; }
+.pace__option { position: relative; display: block; }
+.pace__option input { position: absolute; opacity: 0; inset: 0; margin: 0; }
+.pace__card {
+  display: grid;
+  gap: 0.15rem;
+  height: 100%;
+  padding: 0.55rem 0.6rem 0.6rem;
+  border: 2px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg-raised);
+  transition: background-color 120ms, border-color 120ms;
+}
+.pace__card strong { font-size: 1.05rem; font-weight: 820; font-stretch: 76%; }
+.pace__card span { color: var(--ink-soft); font-size: 0.8rem; line-height: 1.15; }
+.pace__option input:checked + .pace__card { background: var(--mark); border-color: var(--mark); color: var(--mark-ink); }
+.pace__option input:checked + .pace__card span { color: var(--mark-ink); }
+.pace__option input:focus-visible + .pace__card { outline: 3px solid var(--accent); outline-offset: 3px; }
 
 .playlist-list {
   list-style: none;

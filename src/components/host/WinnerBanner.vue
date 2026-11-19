@@ -1,14 +1,18 @@
 <script setup>
+import { computed } from "vue";
 import { patternLabel } from "../../utils/tracks.js";
 
-defineProps({
+const props = defineProps({
   winners: { type: Array, default: () => [] }
 });
+
+// Mientras solo hay línea, el titular es la línea; con un cartón completo, el bingo.
+const title = computed(() => (props.winners.some((winner) => winner.pattern === "FULL") ? "¡Bingo!" : "¡Línea!"));
 </script>
 
 <template>
   <section v-if="winners.length" class="winners" aria-live="assertive">
-    <h2 class="winners__title display">¡Bingo!</h2>
+    <h2 class="winners__title display">{{ title }}</h2>
     <ul class="winners__list">
       <li v-for="winner in winners" :key="`${winner.playerId}-${winner.pattern}`">
         <span class="winners__name">{{ winner.name }}</span>

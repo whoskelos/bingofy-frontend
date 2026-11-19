@@ -10,7 +10,12 @@ const MESSAGES = {
   ROOM_NOT_IN_LOBBY: "La partida ya ha empezado y no admite nuevos jugadores.",
   NOT_HOST: "No hay una sesión de anfitrión activa.",
   INVALID_MARK: "Hay casillas marcadas de canciones que todavía no han sonado.",
-  INVALID_PATTERN: "Ese bingo no está completo.",
+  INVALID_PATTERN: "Ese patrón no es válido.",
+  PATTERN_INCOMPLETE: "Todavía no está completo. Revisa las casillas que te faltan.",
+  LINE_ALREADY_CLAIMED: "La línea ya la ha cantado otra persona. Ahora toca el bingo.",
+  CLAIM_COOLDOWN: "Espera unos segundos antes de volver a cantar.",
+  GAME_NOT_ACTIVE: "Ahora no se puede cantar: la partida no está en curso.",
+  RATE_LIMITED: "Demasiados intentos seguidos. Espera un momento.",
   VALIDATION_ERROR: "Los datos enviados no son válidos."
 };
 

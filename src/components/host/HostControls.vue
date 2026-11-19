@@ -1,9 +1,10 @@
 <script setup>
 import AppButton from "../common/AppButton.vue";
+import { isClaimPause } from "../../utils/gameStatus.js";
 
 defineProps({
   status: { type: String, required: true },
-  pauseReason: { type: String, default: "" },
+  pausedReason: { type: String, default: "" },
   playerReady: { type: Boolean, default: false }
 });
 
@@ -26,10 +27,10 @@ const emit = defineEmits(["activate", "start", "next", "pause", "resume", "conti
     </p>
     <AppButton v-if="status === 'playing'" type="button" @click="emit('next')">Siguiente</AppButton>
     <AppButton v-if="status === 'playing'" type="button" variant="secondary" @click="emit('pause')">Pausa</AppButton>
-    <AppButton v-if="status === 'paused' && pauseReason === 'bingo'" type="button" @click="emit('continue')">
-      Seguir
+    <AppButton v-if="status === 'paused' && isClaimPause(pausedReason)" type="button" @click="emit('continue')">
+      {{ pausedReason === 'line' ? 'Seguir con el bingo' : 'Seguir' }}
     </AppButton>
-    <AppButton v-if="status === 'paused' && pauseReason !== 'bingo'" type="button" @click="emit('resume')">
+    <AppButton v-if="status === 'paused' && !isClaimPause(pausedReason)" type="button" @click="emit('resume')">
       Reanudar
     </AppButton>
     <!-- Terminar queda lejos del resto para que nadie lo pulse sin querer -->

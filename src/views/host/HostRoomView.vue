@@ -16,7 +16,7 @@ import { useSpotifyPlayer } from "../../composables/useSpotifyPlayer.js";
 import { useRoomStore } from "../../stores/room.js";
 import { useSessionStore } from "../../stores/session.js";
 import { errorMessage } from "../../utils/errorMessages.js";
-import { songNote } from "../../utils/gameStatus.js";
+import { endReasonText, isClaimPause, phaseLabel, songNote } from "../../utils/gameStatus.js";
 
 const route = useRoute();
 const room = useRoomStore();
@@ -35,6 +35,9 @@ const spotify = useSpotifyPlayer({
   },
   onConfirm(trackId) {
     emit("song:confirmed", { trackId });
+  },
+  onFailed(trackId) {
+    emit("song:failed", { trackId });
   },
   onRecovered() {
     if (session.authError === "SPOTIFY_AUTH_FAILED" || session.authError === "SPOTIFY_TOKEN_EXPIRED") {
@@ -56,17 +59,25 @@ const { status, on, emit } = useSocket("/host", {
 
 on("room:state", room.applyState);
 on("song:started", room.applySongStarted);
+on("line:won", room.applyLineWon);
 on("bingo:won", room.applyBingoWon);
-on("game:paused", () => room.setStatus("paused"));
-on("game:resumed", () => room.setStatus("playing"));
-on("game:ended", () => room.setStatus("finished"));
+on("game:paused", room.applyPaused);
+on("game:resumed", room.applyResumed);
+on("game:ended", room.applyEnded);
 on("error", (payload) => session.setAuthError(payload?.code));
+// El servidor no ha recibido confirmación de la canción: pide reconectar el reproductor.
+on("player:reconnect", () => {
+  spotify.reconnect(true);
+});
 
 watch(() => room.currentTrack, (track) => spotify.expectTrack(track), { immediate: true });
 
 const playerStatus = computed(() => {
   if (spotify.errorCode.value && playerMessages[spotify.errorCode.value]) {
     return "con error";
+  }
+  if (spotify.reconnecting.value) {
+    return "reconectando";
   }
   if (spotify.ready.value) {
     return "listo";
@@ -84,9 +95,23 @@ const playerTone = computed(() => {
   return playerStatus.value === "con error" ? "bad" : "warn";
 });
 
-const note = computed(() => songNote(room.status, room.pauseReason, room.clipEndsAt));
+const note = computed(() => songNote(room.status, room.pausedReason, room.clipEndsAt));
+
+// El host ve todas las canciones sonadas, la última arriba: sirve para validar un canto
+const playedNewestFirst = computed(() => [...room.played].reverse());
+
+const inGame = computed(() => room.status === "playing" || room.status === "paused");
+// El banner solo se queda fijo en la pausa de la línea y al terminar la partida
+const showWinners = computed(() => room.status === "finished" || (room.status === "paused" && isClaimPause(room.pausedReason)));
+const endText = computed(() => (room.status === "finished" ? endReasonText(room.endReason) : ""));
 
 const playerNotice = computed(() => {
+  if (room.status === "paused" && room.pausedReason === "connection") {
+    return "Varias canciones seguidas no han llegado a sonar. Comprueba la conexión y pulsa Reanudar para reintentar la canción actual.";
+  }
+  if (spotify.reconnecting.value || spotify.recovering.value) {
+    return "Reconectando el reproductor de Spotify…";
+  }
   if (session.authError === "SPOTIFY_AUTH_FAILED" || session.authError === "SPOTIFY_TOKEN_EXPIRED") {
     return "El reproductor de Spotify se ha desconectado. Actívalo otra vez en esta sala. Si no responde, reconecta la cuenta.";
   }
@@ -100,6 +125,9 @@ const playerNotice = computed(() => {
 });
 
 const needsLogin = computed(() => {
+  if (spotify.recovering.value || spotify.reconnecting.value) {
+    return false;
+  }
   return session.expired
     || session.authError === "SPOTIFY_AUTH_FAILED"
     || session.authError === "SPOTIFY_TOKEN_EXPIRED"
@@ -119,6 +147,7 @@ function reconnect() {
         <BrandMark />
         <p class="hall-head__room">Sala {{ code }}</p>
         <p v-if="room.status !== 'lobby' && room.currentIndex >= 0" class="hall-head__song">Canción {{ room.currentIndex + 1 }}</p>
+        <p v-if="inGame" class="hall-head__phase">Se juega: {{ phaseLabel(room.phase) }}</p>
       </div>
       <ConnectionStatus :socket-status="status" :player-status="playerStatus" :player-tone="playerTone" />
     </header>
@@ -128,7 +157,7 @@ function reconnect() {
         Reconectar Spotify
       </AppButton>
     </AlertMessage>
-    <WinnerBanner :winners="room.winners" />
+    <WinnerBanner v-if="showWinners" :winners="room.winners" />
     <section v-if="room.status === 'lobby'" class="lobby">
       <RoomQr :code="code">
         <PlayerList :players="room.players" :players-max="room.playersMax" />
@@ -143,12 +172,12 @@ function reconnect() {
         :note="note"
         :ends-at="room.clipEndsAt || ''"
       />
-      <SongHistory :played="room.played" />
+      <SongHistory :songs="playedNewestFirst" show-count searchable />
     </section>
     <footer class="hall-bar">
       <HostControls
         :status="room.status"
-        :pause-reason="room.pauseReason || ''"
+        :paused-reason="room.pausedReason || ''"
         :player-ready="spotify.ready.value"
         @activate="spotify.activate()"
         @start="emit('game:start', {})"
@@ -160,6 +189,7 @@ function reconnect() {
       />
       <div v-if="room.status === 'finished'" class="finished">
         <p class="finished__title display">Partida terminada</p>
+        <p v-if="endText" class="finished__reason">{{ endText }}</p>
         <RouterLink class="btn" to="/host" @click="room.reset()">Nueva partida</RouterLink>
       </div>
     </footer>
@@ -188,6 +218,14 @@ function reconnect() {
   letter-spacing: 0.04em;
 }
 .hall-head__song { color: var(--ink-soft); font-weight: 650; }
+.hall-head__phase {
+  padding: 0.05em 0.7em 0.1em;
+  border-radius: 999px;
+  background: var(--mark);
+  color: var(--mark-ink);
+  font-weight: 750;
+  font-stretch: 85%;
+}
 .hall-notice { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6em 1.2em; font-size: 1.05em; }
 .hall-notice :deep(.btn) { font-size: 1em; min-height: 2.6em; }
 
@@ -196,6 +234,7 @@ function reconnect() {
 .hall-bar { display: grid; gap: 0.8em; }
 .finished { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6em 1.4em; }
 .finished__title { font-size: 2.4em; }
+.finished__reason { flex-basis: 100%; color: var(--ink-soft); font-size: 1.1em; order: 3; }
 
 @media (max-width: 899px), (max-height: 519px) {
   .hall-bar {
@@ -223,6 +262,7 @@ function reconnect() {
   .hall-head :deep(.brand) { font-size: 1.7em; }
   .hall-head__room { font-size: 1.3em; }
   .hall-head__song { font-size: 1.1em; }
+  .hall-head__phase { font-size: 1.1em; }
   .lobby { grid-template-rows: minmax(0, 1fr); align-content: stretch; }
   .lobby > :first-child { height: 100%; }
   .hall-screen :deep(.winners__title) { font-size: 4.4em; }

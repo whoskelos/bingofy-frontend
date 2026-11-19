@@ -4,7 +4,8 @@ import { formatArtists } from "../../utils/tracks.js";
 defineProps({
   cell: { type: Object, required: true },
   marked: { type: Boolean, default: false },
-  locked: { type: Boolean, default: false }
+  locked: { type: Boolean, default: false },
+  highlighted: { type: Boolean, default: false }
 });
 
 defineEmits(["toggle"]);
@@ -14,7 +15,7 @@ defineEmits(["toggle"]);
   <button
     type="button"
     class="cell"
-    :class="{ 'is-marked': marked, 'is-free': cell.free, 'is-locked': locked }"
+    :class="{ 'is-marked': marked, 'is-free': cell.free, 'is-locked': locked, 'is-line': highlighted }"
     :aria-pressed="marked"
     :disabled="cell.free || locked"
     @click="$emit('toggle')"
@@ -119,6 +120,13 @@ defineEmits(["toggle"]);
 }
 
 .is-marked { border-color: var(--mark); }
+/* Casilla de la línea cantada: aro exterior, no solo color */
+.is-line {
+  border-color: var(--mark);
+  box-shadow: 0 0 0 3px var(--mark), 0 0 0 5px var(--mark-ink);
+  z-index: 1;
+  animation: line-pop 360ms cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
 .is-marked img { filter: saturate(0.35) brightness(0.8); }
 
 .is-free .cell__frame { display: grid; place-items: center; }
@@ -131,6 +139,10 @@ defineEmits(["toggle"]);
 .cell.is-locked { cursor: not-allowed; }
 .cell__free { font-size: clamp(1.1rem, 28cqw, 1.8rem); }
 
+@keyframes line-pop {
+  from { transform: scale(0.94); }
+  to { transform: scale(1); }
+}
 @keyframes dab {
   from { transform: scale(1.5); opacity: 0; }
   to { transform: scale(1); opacity: 1; }

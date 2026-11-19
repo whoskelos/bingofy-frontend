@@ -20,8 +20,8 @@ export async function getPlaylists() {
   return data.playlists || [];
 }
 
-export async function createRoom(playlistIds) {
-  const { data } = await http.post("/api/rooms", { playlistIds });
+export async function createRoom(playlistIds, pace = "normal") {
+  const { data } = await http.post("/api/rooms", { playlistIds, pace });
   return data.room;
 }
 
